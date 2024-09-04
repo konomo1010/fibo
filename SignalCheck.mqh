@@ -142,7 +142,7 @@ void UpdateSignalValidity()
     int lastCompletedShift = iBarShift(_Symbol, Timeframe, lastCompletedBarTime);
     double maValue[1];
 
-    if (CopyBuffer(maHandleMA144, 0, lastCompletedShift, 1, maValue) <= 0)
+    if (CopyBuffer(maHandle2, 0, lastCompletedShift, 1, maValue) <= 0)
     {
         Print("无法获取MA144的值");
         isSignalValid = false;
