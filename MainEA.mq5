@@ -1,5 +1,5 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.1 最初始状态
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
