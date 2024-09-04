@@ -1,5 +1,5 @@
 /*
-  v1.0.1 最初始状态
+  v1.0.1 添加 MA576 和 MA676 判断
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
