@@ -48,6 +48,7 @@ void ResetSignalState()
     signalLow = 0;
     entryTime = 0;
     stopLossHitThisBar = false;
+    validBarCount = 0;
     Print("信号状态已重置，等待新信号...");
 }
 

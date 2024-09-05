@@ -1,5 +1,6 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.2 在进场前增加判断信号K线后要有至少要有2根已完成符合要求的k线。
+
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -81,6 +82,8 @@ bool longSignalConfirmed = false;
 bool shortSignalConfirmed = false;
 datetime entryTime = 0;
 double trailingMaxHigh, trailingMinLow;
+int validBarCount = 0; // 记录符合要求的已完成K线数量
+
 
 // 用于记录当前K线的时间
 datetime currentBarTime = 0;
@@ -183,11 +186,11 @@ void DisplayIndicators()
     }
 
     // 打印均线、ATR和RSI值
-    Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
-          " MA2 (", MA2_Period, "): ", ma2Value[0], 
-          " MA3 (", MA3_Period, "): ", ma3Value[0], 
-          " MA4 (", MA4_Period, "): ", ma4Value[0],
-          " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
+    // Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
+    //       " MA2 (", MA2_Period, "): ", ma2Value[0], 
+    //       " MA3 (", MA3_Period, "): ", ma3Value[0], 
+    //       " MA4 (", MA4_Period, "): ", ma4Value[0],
+    //       " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
 
     // 绘制RSI水平线
     ObjectCreate(0, "RSI_Level_30", OBJ_HLINE, 0, TimeCurrent(), 30);
