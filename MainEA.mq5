@@ -2,6 +2,7 @@
   v1.0.3 
   1. 如果盈利超过600个基点还未触发第一次移动止损时，将止损位置设置在成本价加/减100基点位置。 
   2. 大额浮盈600个基点，成本止损100基点可调节。
+  3. 如果初始止损大于600个基点时，将止损放在入场K线的前一根K线的最高价/最低价位置+/-SL_Points_Buffer个基点。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -64,6 +65,10 @@ input int FixedSLPoints = 200;                        // 固定止损点数（�
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_NONE; // 默认使用不设止盈方式
 input int FixedTPPoints = 200;                        // 固定止盈点数（基点）
 
+input int  BigPreStopLoss = 600;   // 超大初始止损的阈值（基点）
+    
+input int FloatingProfitThresholdPoints = 600; // 超大浮盈的阈值（基点）
+input int BreakEvenStopLossPoints = 100;       // 超大浮盈的成本止损（基点）
 
 CTrade trade;
 
@@ -83,6 +88,7 @@ bool longSignalConfirmed = false;
 bool shortSignalConfirmed = false;
 datetime entryTime = 0;
 double trailingMaxHigh, trailingMinLow;
+bool firstTrailingStopTriggered = false; // 用于跟踪是否已经触发第一次移动止损
 
 // 用于记录当前K线的时间
 datetime currentBarTime = 0;

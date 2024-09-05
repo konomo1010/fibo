@@ -8,6 +8,32 @@ void ManageTrailingStop()
         ulong ticket = PositionGetTicket(i);
         if (ticket > 0)
         {
+            double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+            double currentPrice = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) ? 
+                                   SymbolInfoDouble(_Symbol, SYMBOL_BID) : 
+                                   SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+            double floatingProfitPoints = MathAbs(currentPrice - openPrice) / _Point;
+            double newStopLoss;
+
+            // 如果浮动利润超过阈值但还没有触发第一次移动止损
+            if (floatingProfitPoints >= FloatingProfitThresholdPoints && !firstTrailingStopTriggered)
+            {
+                if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                {
+                    newStopLoss = openPrice + BreakEvenStopLossPoints * _Point;
+                }
+                else if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL)
+                {
+                    newStopLoss = openPrice - BreakEvenStopLossPoints * _Point;
+                }
+
+                trade.PositionModify(ticket, newStopLoss, 0); // 设置盈亏平衡止损
+                Print("浮动利润达到 ", FloatingProfitThresholdPoints, " 基点，设置盈亏平衡止损到 ", newStopLoss);
+                firstTrailingStopTriggered = true; // 标记为已触发第一次移动止损
+                continue; // 跳过到下一个仓位
+            }
+
+            // 执行原来的动态止损逻辑
             double previousClose = iClose(_Symbol, Timeframe, 1);
             double maxHighLocal = aBarHigh;
             double minLowLocal = aBarLow;
@@ -24,9 +50,6 @@ void ManageTrailingStop()
                     minLowLocal = low;
             }
 
-            double currentSL = PositionGetDouble(POSITION_SL);
-            double newStopLoss;
-
             // 如果是多头持仓
             if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
             {
@@ -40,13 +63,7 @@ void ManageTrailingStop()
                     aBarHigh = iHigh(_Symbol, Timeframe, 1);
                     aBarLow = iLow(_Symbol, Timeframe, 1);
                     aBarTime = iTime(_Symbol, Timeframe, 1);
-                }
-
-                // 保持固定止盈设置不变
-                if (TakeProfitMethod == TP_FIXED)
-                {
-                    double takeProfitPrice = PositionGetDouble(POSITION_PRICE_OPEN) + FixedTPPoints * _Point;
-                    trade.PositionModify(ticket, currentSL, takeProfitPrice); // 更新止盈
+                    firstTrailingStopTriggered = true; // 确保标记在第一次触发移动止损时被设置
                 }
             }
             // 如果是空头持仓
@@ -62,13 +79,7 @@ void ManageTrailingStop()
                     aBarHigh = iHigh(_Symbol, Timeframe, 1);
                     aBarLow = iLow(_Symbol, Timeframe, 1);
                     aBarTime = iTime(_Symbol, Timeframe, 1);
-                }
-
-                // 保持固定止盈设置不变
-                if (TakeProfitMethod == TP_FIXED)
-                {
-                    double takeProfitPrice = PositionGetDouble(POSITION_PRICE_OPEN) - FixedTPPoints * _Point;
-                    trade.PositionModify(ticket, currentSL, takeProfitPrice); // 更新止盈
+                    firstTrailingStopTriggered = true; // 确保标记在第一次触发移动止损时被设置
                 }
             }
         }
