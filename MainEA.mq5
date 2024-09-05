@@ -1,5 +1,7 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.5
+  改变移动止损的逻辑，
+  触发移动止损时，由原来止损设置在旧aBar与新aBar中间所有K线(包含"aBar"与这根K线)的最高价(做空)的最大值/最低价(做多)的最小值+100个基点，改为将止损移动到新aBar最高价(做空)/最低价(做多)+100个基点（即动态止损移动缓存基点DynamicSL_Buffer）。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"

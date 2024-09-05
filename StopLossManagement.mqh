@@ -9,6 +9,8 @@ void ManageTrailingStop()
         if (ticket > 0)
         {
             double previousClose = iClose(_Symbol, Timeframe, 1);
+            double previousHigh = iHigh(_Symbol, Timeframe, 1);
+            double previousLow = iLow(_Symbol, Timeframe, 1);
             double maxHighLocal = aBarHigh;
             double minLowLocal = aBarLow;
 
@@ -33,7 +35,7 @@ void ManageTrailingStop()
                 // 做多动态止损逻辑
                 if (previousClose > maxHighLocal)
                 {
-                    newStopLoss = minLowLocal - DynamicSL_Buffer * _Point;
+                    newStopLoss = previousLow - DynamicSL_Buffer * _Point;
                     trade.PositionModify(ticket, newStopLoss, 0); // 更新止损
 
                     // 更新aBar
@@ -55,7 +57,7 @@ void ManageTrailingStop()
                 // 做空动态止损逻辑
                 if (previousClose < minLowLocal)
                 {
-                    newStopLoss = maxHighLocal + DynamicSL_Buffer * _Point;
+                    newStopLoss = previousHigh + DynamicSL_Buffer * _Point;
                     trade.PositionModify(ticket, newStopLoss, 0); // 更新止损
 
                     // 更新aBar
