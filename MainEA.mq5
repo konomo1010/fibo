@@ -1,5 +1,7 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.3 
+  1. 如果盈利超过600个基点还未触发第一次移动止损时，将止损位置设置在成本价加/减100基点位置。 
+  2. 大额浮盈600个基点，成本止损100基点可调节。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -183,11 +185,11 @@ void DisplayIndicators()
     }
 
     // 打印均线、ATR和RSI值
-    Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
-          " MA2 (", MA2_Period, "): ", ma2Value[0], 
-          " MA3 (", MA3_Period, "): ", ma3Value[0], 
-          " MA4 (", MA4_Period, "): ", ma4Value[0],
-          " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
+    // Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
+    //       " MA2 (", MA2_Period, "): ", ma2Value[0], 
+    //       " MA3 (", MA3_Period, "): ", ma3Value[0], 
+    //       " MA4 (", MA4_Period, "): ", ma4Value[0],
+    //       " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
 
     // 绘制RSI水平线
     ObjectCreate(0, "RSI_Level_30", OBJ_HLINE, 0, TimeCurrent(), 30);
