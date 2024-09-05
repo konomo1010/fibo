@@ -183,11 +183,11 @@ void DisplayIndicators()
     }
 
     // 打印均线、ATR和RSI值
-    Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
-          " MA2 (", MA2_Period, "): ", ma2Value[0], 
-          " MA3 (", MA3_Period, "): ", ma3Value[0], 
-          " MA4 (", MA4_Period, "): ", ma4Value[0],
-          " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
+    // Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
+    //       " MA2 (", MA2_Period, "): ", ma2Value[0], 
+    //       " MA3 (", MA3_Period, "): ", ma3Value[0], 
+    //       " MA4 (", MA4_Period, "): ", ma4Value[0],
+    //       " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
 
     // 绘制RSI水平线
     ObjectCreate(0, "RSI_Level_30", OBJ_HLINE, 0, TimeCurrent(), 30);
