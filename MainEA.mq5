@@ -1,5 +1,7 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.4 
+  止盈方式增加初始止盈，当移动止损位置大于(做多)/小于(做空)成本价时，取消初始止盈。
+
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -11,7 +13,7 @@
 enum ENUM_TAKE_PROFIT_METHOD
 {
     TP_NONE,           // 不设止盈
-    TP_FIXED           // 固定止盈
+    TP_FIXED           // 固定止盈,止盈不会消失。
 };
 
 // 定义止损方式的枚举
