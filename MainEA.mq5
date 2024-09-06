@@ -1,5 +1,6 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.8
+  取消MA均线排列限制，增加进场机会。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"

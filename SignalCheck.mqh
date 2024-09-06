@@ -6,8 +6,8 @@ void CheckEntrySignals()
     if (PositionsTotal() > 0 || stopLossHitThisBar)
         return;
 
-    double ma1Values[4], ma2Values[4];
-    if (CopyBuffer(maHandle1, 0, 0, 4, ma1Values) < 4 || CopyBuffer(maHandle2, 0, 0, 4, ma2Values) < 4)
+    double ma1Values[4], ma2Values[4], ma3Values[4], ma4Values[4];
+    if (CopyBuffer(maHandle1, 0, 0, 4, ma1Values) < 4 || CopyBuffer(maHandle2, 0, 0, 4, ma2Values) < 4 || CopyBuffer(maHandle3, 0, 0, 4, ma3Values) < 4 || CopyBuffer(maHandle4, 0, 0, 4, ma4Values) < 4)
     {
         Print("无法复制MA数据");
         return;
@@ -33,7 +33,7 @@ void CheckEntrySignals()
     // 根据用户选择的交易方向检查多头或空头信号
     if (TradeDirection == TRADE_BUY_ONLY || TradeDirection == TRADE_BOTH)
     {
-        if (!longSignalConfirmed && CheckLongEntrySignal(high, low, close, open, ma1Values, ma2Values))
+        if (!longSignalConfirmed && CheckLongEntrySignal(high, low, close, open, ma1Values, ma2Values, ma3Values, ma4Values))
         {
             maxHigh = MathMax(high[0], high[1]);
             trailingMaxHigh = maxHigh;
@@ -48,7 +48,7 @@ void CheckEntrySignals()
 
     if (TradeDirection == TRADE_SELL_ONLY || TradeDirection == TRADE_BOTH)
     {
-        if (!shortSignalConfirmed && CheckShortEntrySignal(high, low, close, open, ma1Values, ma2Values))
+        if (!shortSignalConfirmed && CheckShortEntrySignal(high, low, close, open, ma1Values, ma2Values, ma3Values, ma4Values))
         {
             minLow = MathMin(low[0], low[1]);
             trailingMinLow = minLow;
@@ -65,10 +65,13 @@ void CheckEntrySignals()
 //+------------------------------------------------------------------+
 //| 检查多头进场信号                                                 |
 //+------------------------------------------------------------------+
-bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double &open[], double &ma1Values[], double &ma2Values[])
+bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double &open[], double &ma1Values[], double &ma2Values[], double &ma3Values[], double &ma4Values[])
 {
-    if (ma1Values[0] < ma2Values[0] &&
-        open[0] < ma1Values[0] && close[0] > ma2Values[0] &&
+    printf("ma1Values[0]: %.5f, ma2Values[0]: %.5f, ma3Values[0]: %.5f, ma4Values[0]: %.5f", ma1Values[0], ma2Values[0], ma3Values[0], ma4Values[0]);
+    if (
+        ma1Values[0] > ma2Values[0] && ma2Values[0] >  ma3Values[0] && ma3Values[0] > ma4Values[0] &&
+        // ((open[0] < ma1Values[0] && close[0] > ma2Values[0]) || (open[0] < ma2Values[0] && close[0] > ma1Values[0])) &&
+        open[0] < ma2Values[0] && close[0] > ma1Values[0] &&
         MathAbs(open[0] - close[0]) >= MinBodyPoints * _Point &&
         MathAbs(open[0] - close[0]) <= MaxBodyPoints * _Point)
     {
@@ -79,9 +82,13 @@ bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double
         return true;
     }
 
-    if (ma1Values[1] < ma2Values[1] && ma1Values[0] < ma2Values[0] &&
-        open[1] < ma1Values[1] && close[1] > ma1Values[1] && close[1] < ma2Values[1] &&
-        close[0] > ma2Values[0] && open[0] < ma2Values[0] && open[0] > ma1Values[0] && 
+    if (
+        ma1Values[1] > ma2Values[1] && ma2Values[1] > ma3Values[1] && ma3Values[1] > ma4Values[1] && ma1Values[0] > ma2Values[0] && ma2Values[0] > ma3Values[0] && ma3Values[0] > ma4Values[0] &&
+        // ((open[1] < ma1Values[1] && close[1] > ma1Values[1] && close[1] < ma2Values[1] &&
+        // close[0] > ma2Values[0] && open[0] < ma2Values[0] && open[0] > ma1Values[0]) || (open[1] < ma2Values[1] && close[1] > ma2Values[1] && close[1] < ma1Values[1] &&
+        // close[0] > ma1Values[0] && open[0] < ma1Values[0] && open[0] > ma2Values[0])) && 
+        open[1] < ma2Values[1] && close[1] > ma2Values[1] && close[1] < ma1Values[1] &&
+        close[0] > ma1Values[0] && open[0] < ma1Values[0] && open[0] > ma2Values[0] &&
         high[1] < close[0] && low[0] > open[1] &&
         MathAbs(open[1] - close[1]) >= MinBodyPoints * _Point && MathAbs(open[1] - close[1]) <= MaxBodyPoints * _Point &&
         MathAbs(open[0] - close[0]) >= MinBodyPoints * _Point && MathAbs(open[0] - close[0]) <= MaxBodyPoints * _Point)
@@ -99,10 +106,14 @@ bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double
 //+------------------------------------------------------------------+
 //| 检查空头进场信号                                                 |
 //+------------------------------------------------------------------+
-bool CheckShortEntrySignal(double &high[], double &low[], double &close[], double &open[], double &ma1Values[], double &ma2Values[])
+bool CheckShortEntrySignal(double &high[], double &low[], double &close[], double &open[], double &ma1Values[], double &ma2Values[], double &ma3Values[], double &ma4Values[])
 {
-    if (ma1Values[0] > ma2Values[0] &&
-        open[0] > ma1Values[0] && close[0] < ma2Values[0] &&
+    printf("ma1Values[0]: %.5f, ma2Values[0]: %.5f, ma3Values[0]: %.5f, ma4Values[0]: %.5f", ma1Values[0], ma2Values[0], ma3Values[0], ma4Values[0]);
+    if (
+
+        ma1Values[0] < ma2Values[0] && ma2Values[0] < ma3Values[0] && ma3Values[0] < ma4Values[0] &&
+        // ((open[0] > ma1Values[0] && close[0] < ma2Values[0]) || (open[0] > ma2Values[0] && close[0] < ma1Values[0])) &&
+        open[0] > ma2Values[0] && close[0] < ma1Values[0] &&
         MathAbs(open[0] - close[0]) >= MinBodyPoints * _Point &&
         MathAbs(open[0] - close[0]) <= MaxBodyPoints * _Point)
     {
@@ -113,9 +124,13 @@ bool CheckShortEntrySignal(double &high[], double &low[], double &close[], doubl
         return true;
     }
 
-    if (ma1Values[1] > ma2Values[1] && ma1Values[0] > ma2Values[0] &&
-        open[1] > ma1Values[1] && close[1] < ma1Values[1] && close[1] > ma2Values[1] &&
-        close[0] < ma2Values[0] && open[0] > ma2Values[0] && open[0] < ma1Values[0] &&
+    if (
+        ma1Values[1] < ma2Values[1] && ma2Values[1] < ma3Values[1] && ma3Values[1] < ma4Values[1] && ma1Values[0] < ma2Values[0] && ma2Values[0] < ma3Values[0] && ma3Values[0] < ma4Values[0] &&
+        // ((open[1] > ma1Values[1] && close[1] < ma1Values[1] && close[1] > ma2Values[1] &&
+        // close[0] < ma2Values[0] && open[0] > ma2Values[0] && open[0] < ma1Values[0]) || (open[1] > ma2Values[1] && close[1] < ma2Values[1] && close[1] > ma1Values[1] &&
+        // close[0] < ma1Values[0] && open[0] > ma1Values[0] && open[0] < ma2Values[0])) &&
+        open[1] > ma2Values[1] && close[1] < ma2Values[1] && close[1] > ma1Values[1] &&
+        close[0] < ma1Values[0] && open[0] > ma1Values[0] && open[0] < ma2Values[0] &&
         low[1] > close[0] && high[0] < open[1] &&
         MathAbs(open[1] - close[1]) >= MinBodyPoints * _Point && MathAbs(open[1] - close[1]) <= MaxBodyPoints * _Point &&
         MathAbs(open[0] - close[0]) >= MinBodyPoints * _Point && MathAbs(open[0] - close[0]) <= MaxBodyPoints * _Point)
