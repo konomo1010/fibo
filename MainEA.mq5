@@ -40,10 +40,7 @@ input int TradeStartHour = 0;                         // 允许交易的开始�
 input int TradeEndHour = 24;                          // 允许交易的结束时间（小时）
 input ENUM_TIMEFRAMES Timeframe = PERIOD_M5;          // 交易时间周期，默认5分钟
 input double Lots = 0.05;                             // 初始下单手数
-input int MA1_Period = 144;                           // 移动平均线1周期，默认值为144
-input int MA2_Period = 169;                           // 移动平均线2周期，默认值为169
-input int MA3_Period = 576;                           // 移动平均线3周期，默认值为576
-input int MA4_Period = 676;                           // 移动平均线4周期，默认值为676
+
 input ENUM_MA_METHOD MA_Method = MODE_SMA;            // 移动平均线方法
 input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE; // 移动平均线应用价格
 
@@ -66,6 +63,11 @@ input int FixedTPPoints = 200;                        // 固定止盈点数（�
 CTrade trade;
 
 // 全局变量声明和初始化
+int MA1_Period = 144;                           // 移动平均线1周期，默认值为144
+int MA2_Period = 169;                           // 移动平均线2周期，默认值为169
+int MA3_Period = 576;                           // 移动平均线3周期，默认值为576
+int MA4_Period = 676;                           // 移动平均线4周期，默认值为676
+
 datetime lastCloseTime = 0;
 bool isOrderClosedThisBar = false; // 标记当前K线内是否已有订单被关闭
 double aBarHigh, aBarLow;
