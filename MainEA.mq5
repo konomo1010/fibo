@@ -1,5 +1,7 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.6
+  做多：进场后如果有K线的收盘价小于MA169, 则平仓。
+  做空：进场后如果有K线的收盘价大于MA169, 则平仓。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -10,58 +12,55 @@
 // 定义止盈方式的枚举
 enum ENUM_TAKE_PROFIT_METHOD
 {
-    TP_NONE,           // 不设止盈
-    TP_FIXED           // 固定止盈
+    TP_NONE, // 不设止盈
+    TP_FIXED // 固定止盈
 };
 
 // 定义止损方式的枚举
 enum ENUM_STOP_LOSS_METHOD
 {
-    SL_NONE,           // 不设止损
-    SL_FIXED,          // 固定止损
-    SL_DYNAMIC         // 动态止损
+    SL_NONE,   // 不设止损
+    SL_FIXED,  // 固定止损
+    SL_DYNAMIC // 动态止损
 };
 
 // 定义交易方向的枚举
 enum ENUM_TRADE_DIRECTION
 {
-    TRADE_BUY_ONLY,   // 只做多
-    TRADE_SELL_ONLY,  // 只做空
-    TRADE_BOTH        // 多空都做
+    TRADE_BUY_ONLY,  // 只做多
+    TRADE_SELL_ONLY, // 只做空
+    TRADE_BOTH       // 多空都做
 };
-
-
 
 // 输入参数
 
-input ENUM_TRADE_DIRECTION TradeDirection = TRADE_BOTH; // 默认多空都做
+input ENUM_TRADE_DIRECTION TradeDirection = TRADE_BOTH;    // 默认多空都做
 input string AllowedMonths = "1,2,3,4,5,6,7,8,9,10,11,12"; // 允许交易的月份（用逗号分隔）
-input int TradeStartHour = 0;                         // 允许交易的开始时间（小时）
-input int TradeEndHour = 24;                          // 允许交易的结束时间（小时）
-input ENUM_TIMEFRAMES Timeframe = PERIOD_M5;          // 交易时间周期，默认5分钟
-input double Lots = 0.05;                             // 初始下单手数
-input int MA1_Period = 144;                           // 移动平均线1周期，默认值为144
-input int MA2_Period = 169;                           // 移动平均线2周期，默认值为169
-input int MA3_Period = 576;                           // 移动平均线3周期，默认值为576
-input int MA4_Period = 676;                           // 移动平均线4周期，默认值为676
-input ENUM_MA_METHOD MA_Method = MODE_SMA;            // 移动平均线方法
-input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE; // 移动平均线应用价格
+input int TradeStartHour = 0;                              // 允许交易的开始时间（小时）
+input int TradeEndHour = 24;                               // 允许交易的结束时间（小时）
+input ENUM_TIMEFRAMES Timeframe = PERIOD_M5;               // 交易时间周期，默认5分钟
+input double Lots = 0.05;                                  // 初始下单手数
+input int MA1_Period = 144;                                // 移动平均线1周期，默认值为144
+input int MA2_Period = 169;                                // 移动平均线2周期，默认值为169
+input int MA3_Period = 576;                                // 移动平均线3周期，默认值为576
+input int MA4_Period = 676;                                // 移动平均线4周期，默认值为676
+input ENUM_MA_METHOD MA_Method = MODE_SMA;                 // 移动平均线方法
+input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE;      // 移动平均线应用价格
 
-input int MinBodyPoints = 50;                         // 信号K线最小实体大小（基点）
-input int MaxBodyPoints = 300;                        // 信号K线最大实体大小（基点）
+input int MinBodyPoints = 50;  // 信号K线最小实体大小（基点）
+input int MaxBodyPoints = 300; // 信号K线最大实体大小（基点）
 
-input int StartDelay = 10;                            // 当前K线结束前等待时间（秒）
+input int StartDelay = 10; // 当前K线结束前等待时间（秒）
 
-input int MaxCandleBodySizePoints = 500;              // 信号确认后最大允许的K线实体大小（基点）
+input int MaxCandleBodySizePoints = 500; // 信号确认后最大允许的K线实体大小（基点）
 
-input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_DYNAMIC;   // 默认使用动态止损方式
-input int SL_Points_Buffer = 50;                      // 动态止损初始缓存基点
-input int DynamicSL_Buffer = 100;                     // 动态止损移动缓存基点
-input int FixedSLPoints = 200;                        // 固定止损点数（基点）
+input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_DYNAMIC; // 默认使用动态止损方式
+input int SL_Points_Buffer = 50;                         // 动态止损初始缓存基点
+input int DynamicSL_Buffer = 100;                        // 动态止损移动缓存基点
+input int FixedSLPoints = 200;                           // 固定止损点数（基点）
 
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_NONE; // 默认使用不设止盈方式
-input int FixedTPPoints = 200;                        // 固定止盈点数（基点）
-
+input int FixedTPPoints = 200;                            // 固定止盈点数（基点）
 
 CTrade trade;
 
@@ -151,16 +150,49 @@ void OnTick()
         // 只有在新K线开始时，才更新信号有效性和检查进场信号
         UpdateSignalValidity();
         CheckEntrySignals();
+        // 如果有持仓，检查是否需要平仓
+        if (PositionsTotal() == 1) // 确保只有一个持仓
+        {
+            // 选择当前符号的持仓
+            if (PositionSelect(_Symbol))
+            {
+                // 获取MA169的前一根K线的值
+                double ma169Value[1];
+                if (CopyBuffer(maHandle2, 0, 1, 1, ma169Value) < 0)
+                {
+                    Print("无法获取MA169数据");
+                    return;
+                }
+
+                // 获取前一根K线的收盘价
+                double previousClose = iClose(_Symbol, Timeframe, 1);
+
+                // 获取持仓类型
+                int positionType = (int)PositionGetInteger(POSITION_TYPE);
+
+                // 根据条件平仓
+                if (positionType == POSITION_TYPE_BUY && previousClose < ma169Value[0])
+                {
+                    ulong ticket = PositionGetInteger(POSITION_TICKET);
+                    trade.PositionClose(ticket);
+                    Print("多头持仓因前一根K线收盘价小于MA169而平仓");
+                }
+                else if (positionType == POSITION_TYPE_SELL && previousClose > ma169Value[0])
+                {
+                    ulong ticket = PositionGetInteger(POSITION_TICKET);
+                    trade.PositionClose(ticket);
+                    Print("空头持仓因前一根K线收盘价大于MA169而平仓");
+                }
+
+                // 如果使用动态止损，管理止损
+                if (StopLossMethod == SL_DYNAMIC)
+                    ManageTrailingStop();
+            }
+        }
     }
 
     // 显示均线、ATR和RSI指标
     DisplayIndicators();
-
-    if (PositionsTotal() > 0)
-    {
-        if (StopLossMethod == SL_DYNAMIC)
-            ManageTrailingStop();
-    }
 }
 
 //+------------------------------------------------------------------+
@@ -183,9 +215,9 @@ void DisplayIndicators()
     }
 
     // 打印均线、ATR和RSI值
-    // Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
-    //       " MA2 (", MA2_Period, "): ", ma2Value[0], 
-    //       " MA3 (", MA3_Period, "): ", ma3Value[0], 
+    // Print("MA1 (", MA1_Period, "): ", ma1Value[0],
+    //       " MA2 (", MA2_Period, "): ", ma2Value[0],
+    //       " MA3 (", MA3_Period, "): ", ma3Value[0],
     //       " MA4 (", MA4_Period, "): ", ma4Value[0],
     //       " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
 
@@ -221,7 +253,7 @@ void OnTrade()
                 {
                     lastCloseTime = iTime(_Symbol, Timeframe, 0); // 更新最后一次订单关闭的时间为当前K线时间
                     isOrderClosedThisBar = true;                  // 当前K线内订单被止盈或止损
-                    stopLossHitThisBar = true;  // 标记止损被打掉
+                    stopLossHitThisBar = true;                    // 标记止损被打掉
                     Print("注意: 订单 ", ticket, " 已经被关闭 ", orderReason == ORDER_REASON_SL ? "止损" : "止盈", ".");
                     trailingMaxHigh = 0;
                     trailingMinLow = 0;
