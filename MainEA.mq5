@@ -1,5 +1,9 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.7
+
+  增加RSI判断，
+  1. RSI 周期默认14，可调节。 水平设置30，70，可调节。
+  2. 进场前判断上一根K线是否超卖(做空)或超买(做多)了。如果超卖或超买了则取消进场交易。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -46,6 +50,10 @@ input int MA3_Period = 576;                           // 移动平均线3周期�
 input int MA4_Period = 676;                           // 移动平均线4周期，默认值为676
 input ENUM_MA_METHOD MA_Method = MODE_SMA;            // 移动平均线方法
 input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE; // 移动平均线应用价格
+
+input int RSI_Period = 14;               // RSI周期，默认值为14
+input double RSI_Overbought = 70.0;      // RSI超买水平，默认值为70
+input double RSI_Oversold = 30.0;        // RSI超卖水平，默认值为30
 
 input int MinBodyPoints = 50;                         // 信号K线最小实体大小（基点）
 input int MaxBodyPoints = 300;                        // 信号K线最大实体大小（基点）
@@ -101,8 +109,8 @@ int OnInit()
     // 创建ATR14指标句柄
     atrHandle = iATR(_Symbol, Timeframe, 14);
 
-    // 创建RSI21指标句柄
-    rsiHandle = iRSI(_Symbol, Timeframe, 21, PRICE_CLOSE);
+    // 创建RSI指标句柄，使用可调的RSI周期
+    rsiHandle = iRSI(_Symbol, Timeframe, RSI_Period, PRICE_CLOSE);
 
     if (maHandle1 == INVALID_HANDLE || maHandle2 == INVALID_HANDLE || maHandle3 == INVALID_HANDLE || maHandle4 == INVALID_HANDLE ||
         atrHandle == INVALID_HANDLE || rsiHandle == INVALID_HANDLE)
@@ -190,9 +198,9 @@ void DisplayIndicators()
     //       " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
 
     // 绘制RSI水平线
-    ObjectCreate(0, "RSI_Level_30", OBJ_HLINE, 0, TimeCurrent(), 30);
+    ObjectCreate(0, "RSI_Level_30", OBJ_HLINE, 0, TimeCurrent(), RSI_Oversold);
     ObjectSetInteger(0, "RSI_Level_30", OBJPROP_COLOR, clrRed);
-    ObjectCreate(0, "RSI_Level_70", OBJ_HLINE, 0, TimeCurrent(), 70);
+    ObjectCreate(0, "RSI_Level_70", OBJ_HLINE, 0, TimeCurrent(), RSI_Overbought);
     ObjectSetInteger(0, "RSI_Level_70", OBJPROP_COLOR, clrRed);
 }
 

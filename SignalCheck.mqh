@@ -163,6 +163,30 @@ void UpdateSignalValidity()
         return;
     }
 
+
+    // 加入RSI判断
+    double rsiValue[1];
+    // 复制上一根K线的RSI值
+    if (CopyBuffer(rsiHandle, 0, 1, 1, rsiValue) < 0)
+    {
+        Print("无法获取RSI数据");
+        return;
+    }
+
+    // 检查多头信号的有效性，如果上一根K线RSI超买，则取消多头信号
+    if (longSignalConfirmed && rsiValue[0] > RSI_Overbought)
+    {
+        Print("RSI超买，取消多头信号");
+        ResetSignalState();
+    }
+
+    // 检查空头信号的有效性，如果上一根K线RSI超卖，则取消空头信号
+    if (shortSignalConfirmed && rsiValue[0] < RSI_Oversold)
+    {
+        Print("RSI超卖，取消空头信号");
+        ResetSignalState();
+    }
+
     if (longSignalConfirmed)
     {
 
