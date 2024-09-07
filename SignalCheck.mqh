@@ -40,6 +40,7 @@ void CheckEntrySignals()
             trailingMinLow = low[0];
             longSignalConfirmed = true;
             isSignalValid = true;
+            validBarCount = 1; // 初始化计数器为1（信号K线）
             Print("多头信号已确认");
 
             signalBarIndex = iBarShift(_Symbol, Timeframe, iTime(_Symbol, Timeframe, 2));
@@ -55,6 +56,7 @@ void CheckEntrySignals()
             trailingMaxHigh = high[0];
             shortSignalConfirmed = true;
             isSignalValid = true;
+            validBarCount = 1; // 初始化计数器为1（信号K线）
             Print("空头信号已确认");
 
             signalBarIndex = iBarShift(_Symbol, Timeframe, iTime(_Symbol, Timeframe, 2));
@@ -165,13 +167,15 @@ void UpdateSignalValidity()
 
     if (longSignalConfirmed)
     {
-
+        
+        printf("lastCompletedClose: %.5f  minLow",lastCompletedClose,minLow);
+        printf("==========> K线计数器 %d",validBarCount);
         if (lastCompletedClose < maValue[0])
         {
             ResetSignalState();
             Print("多头信号无效: 上一根已完成K线的收盘价低于MA144");
         }
-        else if (lastCompletedClose > maxHigh)
+        else if (lastCompletedClose > maxHigh && validBarCount >= MinSignalBars)
         {
             Print("多头信号确认，准备进场");
             Sleep(StartDelay * 1000);
@@ -182,15 +186,19 @@ void UpdateSignalValidity()
             printf("更新最高点: %.5f", lastCompletedHigh);
             maxHigh = lastCompletedHigh;
         }
+        
+        validBarCount++; // 信号K线有效，计数器加1
     }
     else if (shortSignalConfirmed)
     {
+        printf("==========> K线计数器 %d",validBarCount);
+        printf("lastCompletedClose: %.5f  minLow",lastCompletedClose,minLow);
         if (lastCompletedClose > maValue[0])
         {
             ResetSignalState();
             Print("空头信号无效: 上一根已完成K线的收盘价高于MA144");
         }
-        else if (lastCompletedClose < minLow)
+        else if (lastCompletedClose < minLow && validBarCount >= MinSignalBars)
         {
             Print("空头信号确认，准备进场");
             Sleep(StartDelay * 1000);
@@ -202,5 +210,7 @@ void UpdateSignalValidity()
             printf("更新最低点: %.5f", lastCompletedLow);
             minLow = lastCompletedLow;
         }
+        validBarCount++; // 信号K线有效，计数器加1
+        
     }
 }

@@ -3,6 +3,12 @@
   增加动态止盈功能(增加止盈枚举选择)，移动止盈的逻辑如下：进场时设置一个初始止盈位置默认是2000个基点(初始止盈位置可调节，选择移动止盈时生效)。当触发移动止损时，止损位置调整多少，止盈位置也相应调整多少。
 
   根据ART的倍数设置止损止盈位置。
+
+  合并 v1.0.2
+  在进场前增加判断信号K线后要有至少要有2根已完成符合要求的k线。
+
+  增加日线ART>25的条件
+
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -51,9 +57,9 @@ input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE; // 移动平均线应用�
 input int MinBodyPoints = 50;  // 信号K线最小实体大小（基点）
 input int MaxBodyPoints = 300; // 信号K线最大实体大小（基点）
 
-input int StartDelay = 10; // 当前K线结束前等待时间（秒）
-
-input int MaxCandleBodySizePoints = 500; // 信号确认后最大允许的K线实体大小（基点）
+input int StartDelay = 10;               // 当前K线结束前等待时间（秒）
+input int MinSignalBars = 2;             // 信号K线后至少要有多少根符合要求的K线
+input int MaxCandleBodySizePoints = 500; // 信号K线后最大允许的K线实体大小（基点）
 
 input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_DYNAMIC; // 默认使用动态止损方式
 input int SL_Points_Buffer = 50;                         // 动态止损初始缓存基点
@@ -89,6 +95,7 @@ bool longSignalConfirmed = false;
 bool shortSignalConfirmed = false;
 datetime entryTime = 0;
 double trailingMaxHigh, trailingMinLow;
+int validBarCount = 0; // 记录符合要求的已完成K线数量
 
 // 用于记录当前K线的时间
 datetime currentBarTime = 0;
@@ -143,8 +150,29 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-    if (!IsWithinTradingHours(TradeStartHour, TradeEndHour) || !IsMonthAllowed(AllowedMonths))
+    // 显示均线、ATR和RSI指标
+    DisplayIndicators();
+    
+
+    if (((!IsWithinTradingHours(TradeStartHour, TradeEndHour)) || (!IsMonthAllowed(AllowedMonths))) && PositionsTotal() == 0)
         return;
+
+    // 获取当前日线ATR的值
+    double dailyATR = GetDailyATRValue();
+
+    // 如果无法获取ATR值或者ATR小于20，则不进行交易
+    if (dailyATR < 0 && PositionsTotal() == 0)
+    {
+        Print("无法获取有效的日线ATR值，跳过本次交易检查");
+        return;
+    }
+
+    if (dailyATR < 25 && PositionsTotal() == 0)
+    {
+        Print("日线ATR值小于20，本次不进行交易");
+        return; // 跳过交易操作
+    }
+
 
     // 获取当前K线的时间
     datetime newBarTime = iTime(_Symbol, Timeframe, 0);
@@ -169,8 +197,7 @@ void OnTick()
         }
     }
 
-    // 显示均线、ATR和RSI指标
-    DisplayIndicators();
+
 }
 
 //+------------------------------------------------------------------+

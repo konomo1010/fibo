@@ -48,7 +48,23 @@ void ResetSignalState()
     signalLow = 0;
     entryTime = 0;
     stopLossHitThisBar = false;
+    validBarCount = 0;
     Print("信号状态已重置，等待新信号...");
 }
 
 
+double GetDailyATRValue()
+{
+    // 创建日线ATR句柄，使用14周期的ATR指标，日线级别
+    int dailyATRHandle = iATR(_Symbol, PERIOD_D1, 14);
+    double atrValue[1];
+
+    // 获取日线ATR的最新值
+    if (CopyBuffer(dailyATRHandle, 0, 0, 1, atrValue) <= 0)
+    {
+        Print("无法获取日线ATR数据");
+        return -1;  // 返回一个无效值
+    }
+
+    return atrValue[0];  // 返回ATR的最新值
+}
