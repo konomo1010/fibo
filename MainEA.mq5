@@ -1,17 +1,25 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.9
+  进场前判断前一根K线的实体要 > MinBodyPoints(50点) && 大于(做多) > maxHihg + 10 * _Point /小于做空  < minLow - 10 * _Point.
+
+1. 如果是做空，信号K线的下影线必须小于实体。
+2. 如果是做多，信号K线的上影线必须小于实体。
+  
+  加动态止盈
+
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
 #include "OrderManagement.mqh"
-#include "StopLossManagement.mqh"
+#include "ManageTrailingStopAndTakeProfit.mqh"
 #include "UtilityFunctions.mqh"
 
 // 定义止盈方式的枚举
 enum ENUM_TAKE_PROFIT_METHOD
 {
     TP_NONE,           // 不设止盈
-    TP_FIXED           // 固定止盈
+    TP_FIXED,          // 固定止盈
+    TP_DYNAMIC         // 动态止盈
 };
 
 // 定义止损方式的枚举
@@ -49,7 +57,7 @@ input int MaxBodyPoints = 300;                        // 信号K线最大实体�
 
 input int StartDelay = 10;                            // 当前K线结束前等待时间（秒）
 
-input int MaxCandleBodySizePoints = 500;              // 信号确认后最大允许的K线实体大小（基点）
+input int MaxCandleBodySizePoints = 500;              // 信号确认后入场前最大允许的K线实体大小（基点）
 
 input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_DYNAMIC;   // 默认使用动态止损方式
 input int SL_Points_Buffer = 50;                      // 动态止损初始缓存基点
@@ -58,6 +66,7 @@ input int FixedSLPoints = 200;                        // 固定止损点数（�
 
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_NONE; // 默认使用不设止盈方式
 input int FixedTPPoints = 200;                        // 固定止盈点数（基点）
+input int DynamicTP_Buffer = 2000;        // 动态止盈初始点数（进场时的止盈位置,配置动态止盈生效）
 
 
 CTrade trade;
@@ -160,8 +169,8 @@ void OnTick()
 
     if (PositionsTotal() > 0)
     {
-        if (StopLossMethod == SL_DYNAMIC)
-            ManageTrailingStop();
+        if (StopLossMethod == SL_DYNAMIC || TakeProfitMethod == TP_DYNAMIC)
+            ManageTrailingStopAndTakeProfit();
     }
 }
 

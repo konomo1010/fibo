@@ -22,6 +22,11 @@ void CheckEntrySignals()
         open[i] = iOpen(_Symbol, Timeframe, i + 1);
     }
 
+    // 计算K线的实体大小和上影线长度
+    double bodySize = MathAbs(close[0] - open[0]);             // 实体大小
+    double upperShadow = high[0] - MathMax(open[0], close[0]); // 上影线
+    double lowerShadow = MathMin(open[0], close[0]) - low[0];  // 下影线
+
     // 检查上一根K线的实体大小
     double previousCandleBodySize = MathAbs(open[1] - close[1]) / _Point;
     if (previousCandleBodySize > MaxCandleBodySizePoints)
@@ -35,6 +40,12 @@ void CheckEntrySignals()
     {
         if (!longSignalConfirmed && CheckLongEntrySignal(high, low, close, open, ma1Values, ma2Values))
         {
+            if (upperShadow >= bodySize)
+            {
+                Print("上影线大于或等于实体，取消多头信号");
+                ResetSignalState();
+                return;
+            }
             maxHigh = MathMax(high[0], high[1]);
             trailingMaxHigh = maxHigh;
             trailingMinLow = low[0];
@@ -50,6 +61,12 @@ void CheckEntrySignals()
     {
         if (!shortSignalConfirmed && CheckShortEntrySignal(high, low, close, open, ma1Values, ma2Values))
         {
+            if (lowerShadow >= bodySize)
+            {
+                Print("下影线大于或等于实体，取消空头信号");
+                ResetSignalState();
+                return;
+            }
             minLow = MathMin(low[0], low[1]);
             trailingMinLow = minLow;
             trailingMaxHigh = high[0];
@@ -81,7 +98,7 @@ bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double
 
     if (ma1Values[1] < ma2Values[1] && ma1Values[0] < ma2Values[0] &&
         open[1] < ma1Values[1] && close[1] > ma1Values[1] && close[1] < ma2Values[1] &&
-        close[0] > ma2Values[0] && open[0] < ma2Values[0] && open[0] > ma1Values[0] && 
+        close[0] > ma2Values[0] && open[0] < ma2Values[0] && open[0] > ma1Values[0] &&
         high[1] < close[0] && low[0] > open[1] &&
         MathAbs(open[1] - close[1]) >= MinBodyPoints * _Point && MathAbs(open[1] - close[1]) <= MaxBodyPoints * _Point &&
         MathAbs(open[0] - close[0]) >= MinBodyPoints * _Point && MathAbs(open[0] - close[0]) <= MaxBodyPoints * _Point)
@@ -154,6 +171,9 @@ void UpdateSignalValidity()
     double lastCompletedLow = iLow(_Symbol, Timeframe, lastCompletedShift);
     double lastCompletedOpen = iOpen(_Symbol, Timeframe, lastCompletedShift);
 
+    double upperShadow = lastCompletedHigh - MathMax(lastCompletedOpen, lastCompletedClose); // 上影线
+    double lowerShadow = MathMin(lastCompletedOpen, lastCompletedClose) - lastCompletedLow;  // 下影线
+
     // 检查上一根K线的实体大小
     double previousCandleBodySize = MathAbs(lastCompletedOpen - lastCompletedClose) / _Point;
     if (previousCandleBodySize > MaxCandleBodySizePoints)
@@ -171,7 +191,7 @@ void UpdateSignalValidity()
             ResetSignalState();
             Print("多头信号无效: 上一根已完成K线的收盘价低于MA144");
         }
-        else if (lastCompletedClose > maxHigh)
+        else if (lastCompletedClose > maxHigh + 10 * _Point && previousCandleBodySize > MinBodyPoints)
         {
             Print("多头信号确认，准备进场");
             Sleep(StartDelay * 1000);
@@ -190,7 +210,7 @@ void UpdateSignalValidity()
             ResetSignalState();
             Print("空头信号无效: 上一根已完成K线的收盘价高于MA144");
         }
-        else if (lastCompletedClose < minLow)
+        else if (lastCompletedClose < minLow - 10 * _Point && previousCandleBodySize > MinBodyPoints)
         {
             Print("空头信号确认，准备进场");
             Sleep(StartDelay * 1000);
