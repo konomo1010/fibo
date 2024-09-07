@@ -3,12 +3,6 @@
   增加动态止盈功能(增加止盈枚举选择)，移动止盈的逻辑如下：进场时设置一个初始止盈位置默认是2000个基点(初始止盈位置可调节，选择移动止盈时生效)。当触发移动止损时，止损位置调整多少，止盈位置也相应调整多少。
 
   根据ART的倍数设置止损止盈位置。
-
-  合并 v1.0.2
-  在进场前增加判断信号K线后要有至少要有2根已完成符合要求的k线。
-
-  增加日线ART>25的条件
-
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -156,23 +150,6 @@ void OnTick()
 
     if (((!IsWithinTradingHours(TradeStartHour, TradeEndHour)) || (!IsMonthAllowed(AllowedMonths))) && PositionsTotal() == 0)
         return;
-
-    // 获取当前日线ATR的值
-    double dailyATR = GetDailyATRValue();
-
-    // 如果无法获取ATR值或者ATR小于20，则不进行交易
-    if (dailyATR < 0 && PositionsTotal() == 0)
-    {
-        Print("无法获取有效的日线ATR值，跳过本次交易检查");
-        return;
-    }
-
-    if (dailyATR < 25 && PositionsTotal() == 0)
-    {
-        Print("日线ATR值小于20，本次不进行交易");
-        return; // 跳过交易操作
-    }
-
 
     // 获取当前K线的时间
     datetime newBarTime = iTime(_Symbol, Timeframe, 0);
