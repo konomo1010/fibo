@@ -1,17 +1,19 @@
 /*
-  v1.0.0 最初始状态
+  v1.0.10
+  增加动态止盈功能(增加止盈枚举选择)，移动止盈的逻辑如下：进场时设置一个初始止盈位置默认是2000个基点(初始止盈位置可调节，选择移动止盈时生效)。当触发移动止损时，止损位置调整多少，止盈位置也相应调整多少。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
 #include "OrderManagement.mqh"
-#include "StopLossManagement.mqh"
+#include "ManageTrailingStopAndTakeProfit.mqh"
 #include "UtilityFunctions.mqh"
 
 // 定义止盈方式的枚举
 enum ENUM_TAKE_PROFIT_METHOD
 {
     TP_NONE,           // 不设止盈
-    TP_FIXED           // 固定止盈
+    TP_FIXED,           // 固定止盈
+    TP_DYNAMIC         // 动态止盈
 };
 
 // 定义止损方式的枚举
@@ -58,6 +60,7 @@ input int FixedSLPoints = 200;                        // 固定止损点数（�
 
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_NONE; // 默认使用不设止盈方式
 input int FixedTPPoints = 200;                        // 固定止盈点数（基点）
+input int InitialTPPoints = 2000;  // 初始止盈点数（适用于动态止盈方式）
 
 
 CTrade trade;
@@ -161,7 +164,7 @@ void OnTick()
     if (PositionsTotal() > 0)
     {
         if (StopLossMethod == SL_DYNAMIC)
-            ManageTrailingStop();
+            ManageTrailingStopAndTakeProfit();
     }
 }
 

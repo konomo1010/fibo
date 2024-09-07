@@ -21,10 +21,16 @@ void OpenBuyOrder(double high, double low)
             stopLossPrice = low - SL_Points_Buffer * _Point;
         }
 
-        // 设置止盈
+        // 设置固定止盈
         if (TakeProfitMethod == TP_FIXED)
         {
             takeProfitPrice = askPrice + FixedTPPoints * _Point;
+        }
+        
+        // 设置动态止盈
+        if (TakeProfitMethod == TP_DYNAMIC)
+        {
+            takeProfitPrice = askPrice + InitialTPPoints * _Point; // 计算初始止盈价格
         }
 
         if (trade.Buy(Lots, _Symbol, askPrice, StopLossMethod != SL_NONE ? stopLossPrice : 0, TakeProfitMethod != TP_NONE ? takeProfitPrice : 0, "Buy Signal"))
@@ -72,6 +78,12 @@ void OpenSellOrder(double high, double low)
         if (TakeProfitMethod == TP_FIXED)
         {
             takeProfitPrice = bidPrice - FixedTPPoints * _Point;
+        }
+
+        // 设置动态止盈
+        if (TakeProfitMethod == TP_DYNAMIC)
+        {
+            takeProfitPrice =  bidPrice - InitialTPPoints * _Point; // 计算初始止盈价格
         }
 
         if (trade.Sell(Lots, _Symbol, bidPrice, StopLossMethod != SL_NONE ? stopLossPrice : 0, TakeProfitMethod != TP_NONE ? takeProfitPrice : 0, "Sell Signal"))

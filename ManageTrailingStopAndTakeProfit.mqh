@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //| 管理动态止损和固定止盈                                           |
 //+------------------------------------------------------------------+
-void ManageTrailingStop()
+void ManageTrailingStopAndTakeProfit()
 {
     for (int i = 0; i < PositionsTotal(); i++)
     {
@@ -25,7 +25,8 @@ void ManageTrailingStop()
             }
 
             double currentSL = PositionGetDouble(POSITION_SL);
-            double newStopLoss;
+            double currentTP = PositionGetDouble(POSITION_TP); // 获取当前止盈位置
+            double newStopLoss, newTakeProfit;
 
             // 如果是多头持仓
             if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
@@ -34,19 +35,24 @@ void ManageTrailingStop()
                 if (previousClose > maxHighLocal)
                 {
                     newStopLoss = minLowLocal - DynamicSL_Buffer * _Point;
-                    trade.PositionModify(ticket, newStopLoss, 0); // 更新止损
+                    newTakeProfit = currentTP;
+                    // 保持固定止盈设置不变
+                    if (TakeProfitMethod == TP_FIXED)
+                    {
+                        newTakeProfit = currentTP;
+                    }
+                    
+                    // 动态止盈逻辑：根据止损调整相应调整止盈
+                    if (TakeProfitMethod == TP_DYNAMIC)
+                    {
+                        newTakeProfit = currentTP + (newStopLoss - currentSL);    // 根据止损调整幅度来调整止盈
+                    }
 
+                    trade.PositionModify(ticket, newStopLoss, newTakeProfit); // 更新止损
                     // 更新aBar
                     aBarHigh = iHigh(_Symbol, Timeframe, 1);
                     aBarLow = iLow(_Symbol, Timeframe, 1);
                     aBarTime = iTime(_Symbol, Timeframe, 1);
-                }
-
-                // 保持固定止盈设置不变
-                if (TakeProfitMethod == TP_FIXED)
-                {
-                    double takeProfitPrice = PositionGetDouble(POSITION_PRICE_OPEN) + FixedTPPoints * _Point;
-                    trade.PositionModify(ticket, currentSL, takeProfitPrice); // 更新止盈
                 }
             }
             // 如果是空头持仓
@@ -56,19 +62,25 @@ void ManageTrailingStop()
                 if (previousClose < minLowLocal)
                 {
                     newStopLoss = maxHighLocal + DynamicSL_Buffer * _Point;
-                    trade.PositionModify(ticket, newStopLoss, 0); // 更新止损
+                    newTakeProfit = currentTP;
+                    // 保持固定止盈设置不变
+                    if (TakeProfitMethod == TP_FIXED)
+                    {
+                        newTakeProfit = currentTP;
+                    }
 
+                    // 动态止盈逻辑：根据止损调整相应调整止盈
+                    if (TakeProfitMethod == TP_DYNAMIC)
+                    {
+                        newTakeProfit = currentTP - (currentSL - newStopLoss);    // 根据止损调整幅度来调整止盈
+                        // trade.PositionModify(ticket, newStopLoss, newTakeProfit); // 更新止盈
+                    }
+
+                    trade.PositionModify(ticket, newStopLoss, newTakeProfit); // 更新止损
                     // 更新aBar
                     aBarHigh = iHigh(_Symbol, Timeframe, 1);
                     aBarLow = iLow(_Symbol, Timeframe, 1);
                     aBarTime = iTime(_Symbol, Timeframe, 1);
-                }
-
-                // 保持固定止盈设置不变
-                if (TakeProfitMethod == TP_FIXED)
-                {
-                    double takeProfitPrice = PositionGetDouble(POSITION_PRICE_OPEN) - FixedTPPoints * _Point;
-                    trade.PositionModify(ticket, currentSL, takeProfitPrice); // 更新止盈
                 }
             }
         }
