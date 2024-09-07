@@ -1,6 +1,8 @@
 /*
   v1.0.10
   增加动态止盈功能(增加止盈枚举选择)，移动止盈的逻辑如下：进场时设置一个初始止盈位置默认是2000个基点(初始止盈位置可调节，选择移动止盈时生效)。当触发移动止损时，止损位置调整多少，止盈位置也相应调整多少。
+
+  根据ART的倍数设置止损止盈位置。
 */
 #include <Trade\Trade.mqh>
 #include "SignalCheck.mqh"
@@ -11,65 +13,66 @@
 // 定义止盈方式的枚举
 enum ENUM_TAKE_PROFIT_METHOD
 {
-    TP_NONE,           // 不设止盈
-    TP_FIXED,           // 固定止盈
-    TP_DYNAMIC         // 动态止盈
+    TP_NONE,    // 不设止盈
+    TP_FIXED,   // 固定止盈
+    TP_DYNAMIC, // 动态止盈
+    TP_ATR      // ATR止盈
 };
 
 // 定义止损方式的枚举
 enum ENUM_STOP_LOSS_METHOD
 {
-    SL_NONE,           // 不设止损
-    SL_FIXED,          // 固定止损
-    SL_DYNAMIC         // 动态止损
+    SL_NONE,    // 不设止损
+    SL_FIXED,   // 固定止损
+    SL_DYNAMIC, // 动态止损
+    SL_ATR,     // ATR止损
 };
 
 // 定义交易方向的枚举
 enum ENUM_TRADE_DIRECTION
 {
-    TRADE_BUY_ONLY,   // 只做多
-    TRADE_SELL_ONLY,  // 只做空
-    TRADE_BOTH        // 多空都做
+    TRADE_BUY_ONLY,  // 只做多
+    TRADE_SELL_ONLY, // 只做空
+    TRADE_BOTH       // 多空都做
 };
-
-
 
 // 输入参数
 
-input ENUM_TRADE_DIRECTION TradeDirection = TRADE_BOTH; // 默认多空都做
+input ENUM_TRADE_DIRECTION TradeDirection = TRADE_BOTH;    // 默认多空都做
 input string AllowedMonths = "1,2,3,4,5,6,7,8,9,10,11,12"; // 允许交易的月份（用逗号分隔）
-input int TradeStartHour = 0;                         // 允许交易的开始时间（小时）
-input int TradeEndHour = 24;                          // 允许交易的结束时间（小时）
-input ENUM_TIMEFRAMES Timeframe = PERIOD_M5;          // 交易时间周期，默认5分钟
-input double Lots = 0.05;                             // 初始下单手数
+input int TradeStartHour = 0;                              // 允许交易的开始时间（小时）
+input int TradeEndHour = 24;                               // 允许交易的结束时间（小时）
+input ENUM_TIMEFRAMES Timeframe = PERIOD_M5;               // 交易时间周期，默认5分钟
+input double Lots = 0.05;                                  // 初始下单手数
 
 input ENUM_MA_METHOD MA_Method = MODE_SMA;            // 移动平均线方法
 input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE; // 移动平均线应用价格
 
-input int MinBodyPoints = 50;                         // 信号K线最小实体大小（基点）
-input int MaxBodyPoints = 300;                        // 信号K线最大实体大小（基点）
+input int MinBodyPoints = 50;  // 信号K线最小实体大小（基点）
+input int MaxBodyPoints = 300; // 信号K线最大实体大小（基点）
 
-input int StartDelay = 10;                            // 当前K线结束前等待时间（秒）
+input int StartDelay = 10; // 当前K线结束前等待时间（秒）
 
-input int MaxCandleBodySizePoints = 500;              // 信号确认后最大允许的K线实体大小（基点）
+input int MaxCandleBodySizePoints = 500; // 信号确认后最大允许的K线实体大小（基点）
 
-input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_DYNAMIC;   // 默认使用动态止损方式
-input int SL_Points_Buffer = 50;                      // 动态止损初始缓存基点
-input int DynamicSL_Buffer = 100;                     // 动态止损移动缓存基点
-input int FixedSLPoints = 200;                        // 固定止损点数（基点）
+input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_DYNAMIC; // 默认使用动态止损方式
+input int SL_Points_Buffer = 50;                         // 动态止损初始缓存基点
+input int DynamicSL_Buffer = 100;                        // 动态止损移动缓存基点
+input int FixedSLPoints = 200;                           // 固定止损点数（基点）
+input double ATR_StopLoss_Multiplier = 3.0;              // ATR止损倍数(ATR止损生效)
 
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_NONE; // 默认使用不设止盈方式
-input int FixedTPPoints = 200;                        // 固定止盈点数（基点）
-input int InitialTPPoints = 2000;  // 初始止盈点数（适用于动态止盈方式）
-
+input int FixedTPPoints = 200;                            // 固定止盈点数（基点）
+input int InitialTPPoints = 2000;                         // 初始止盈点数（适用于动态止盈方式）
+input double ATR_TakeProfit_Multiplier = 6.0;             // ATR止盈倍数(ATR止盈生效)
 
 CTrade trade;
 
 // 全局变量声明和初始化
-int MA1_Period = 144;                           // 移动平均线1周期，默认值为144
-int MA2_Period = 169;                           // 移动平均线2周期，默认值为169
-int MA3_Period = 576;                           // 移动平均线3周期，默认值为576
-int MA4_Period = 676;                           // 移动平均线4周期，默认值为676
+int MA1_Period = 144; // 移动平均线1周期，默认值为144
+int MA2_Period = 169; // 移动平均线2周期，默认值为169
+int MA3_Period = 576; // 移动平均线3周期，默认值为576
+int MA4_Period = 676; // 移动平均线4周期，默认值为676
 
 datetime lastCloseTime = 0;
 bool isOrderClosedThisBar = false; // 标记当前K线内是否已有订单被关闭
@@ -149,23 +152,25 @@ void OnTick()
     // 判断是否是新K线开始
     if (newBarTime != currentBarTime)
     {
-        currentBarTime = newBarTime;  // 更新当前K线的时间
-        isOrderClosedThisBar = false; // 重置标记，表示新K线开始
-        stopLossHitThisBar = false;   // 重置止损状态
+        if (PositionsTotal() > 0)
+        {
+            // printf("移动止损止盈。。。。");
+            ManageTrailingStopAndTakeProfit();
+        }
+        else
+        {
+            currentBarTime = newBarTime;  // 更新当前K线的时间
+            isOrderClosedThisBar = false; // 重置标记，表示新K线开始
+            stopLossHitThisBar = false;   // 重置止损状态
 
-        // 只有在新K线开始时，才更新信号有效性和检查进场信号
-        UpdateSignalValidity();
-        CheckEntrySignals();
+            // 只有在新K线开始时，才更新信号有效性和检查进场信号
+            UpdateSignalValidity();
+            CheckEntrySignals();
+        }
     }
 
     // 显示均线、ATR和RSI指标
     DisplayIndicators();
-
-    if (PositionsTotal() > 0)
-    {
-        if (StopLossMethod == SL_DYNAMIC)
-            ManageTrailingStopAndTakeProfit();
-    }
 }
 
 //+------------------------------------------------------------------+
@@ -188,9 +193,9 @@ void DisplayIndicators()
     }
 
     // 打印均线、ATR和RSI值
-    // Print("MA1 (", MA1_Period, "): ", ma1Value[0], 
-    //       " MA2 (", MA2_Period, "): ", ma2Value[0], 
-    //       " MA3 (", MA3_Period, "): ", ma3Value[0], 
+    // Print("MA1 (", MA1_Period, "): ", ma1Value[0],
+    //       " MA2 (", MA2_Period, "): ", ma2Value[0],
+    //       " MA3 (", MA3_Period, "): ", ma3Value[0],
     //       " MA4 (", MA4_Period, "): ", ma4Value[0],
     //       " ATR14: ", atrValue[0], " RSI21: ", rsiValue[0]);
 
@@ -226,7 +231,7 @@ void OnTrade()
                 {
                     lastCloseTime = iTime(_Symbol, Timeframe, 0); // 更新最后一次订单关闭的时间为当前K线时间
                     isOrderClosedThisBar = true;                  // 当前K线内订单被止盈或止损
-                    stopLossHitThisBar = true;  // 标记止损被打掉
+                    stopLossHitThisBar = true;                    // 标记止损被打掉
                     Print("注意: 订单 ", ticket, " 已经被关闭 ", orderReason == ORDER_REASON_SL ? "止损" : "止盈", ".");
                     trailingMaxHigh = 0;
                     trailingMinLow = 0;
