@@ -3,6 +3,9 @@
   增加动态止盈功能(增加止盈枚举选择)，移动止盈的逻辑如下：进场时设置一个初始止盈位置默认是2000个基点(初始止盈位置可调节，选择移动止盈时生效)。当触发移动止损时，止损位置调整多少，止盈位置也相应调整多少。
 
   根据ART的倍数设置止损止盈位置。
+
+  设置最大止损额度，有的时候止损ART倍数太大，导致止损额度过大，需要设置一个最大止损额度。
+
 */
 
 #include <Trade\Trade.mqh>
@@ -57,6 +60,7 @@ input int MinSignalBars = 1;             // 信号K线后至少要有多少根�
 input int MaxCandleBodySizePoints = 300; // 信号K线后最大允许的K线实体大小（基点）
 
 input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_ATR; // 默认使用动态止损方式
+input int MAX_SL = 1000;                             // 最大止损额度(基点)
 input int SL_Points_Buffer = 150;                         // 动态止损初始缓存基点
 input int DynamicSL_Buffer = 100;                        // 动态止损移动缓存基点
 input int FixedSLPoints = 200;                           // 固定止损点数（基点）

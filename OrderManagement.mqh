@@ -27,10 +27,18 @@ void OpenBuyOrder(double high, double low)
         else if (StopLossMethod == SL_DYNAMIC) // 看多 动态止损
         {
             stopLossPrice = low - SL_Points_Buffer * _Point;
+            printf("askPrice - stopLossPrice: " + MathAbs(askPrice - stopLossPrice) + " MAX_SL: " + MAX_SL);
+            if (MathAbs(askPrice - stopLossPrice)/_Point > MAX_SL) {
+                stopLossPrice = askPrice - MAX_SL * _Point;
+            }
         }
         else if (StopLossMethod == SL_ATR) // 看多 ATR止损
         {
             stopLossPrice = askPrice - atrValue[0] * ATR_StopLoss_Multiplier;
+            printf("askPrice - stopLossPrice: " + MathAbs(askPrice - stopLossPrice) + " MAX_SL: " + MAX_SL);
+            if (MathAbs(askPrice - stopLossPrice)/_Point > MAX_SL) {
+                stopLossPrice = askPrice - MAX_SL * _Point;
+            }
         }
 
         // 设置固定止盈
@@ -94,10 +102,18 @@ void OpenSellOrder(double high, double low)
         else if (StopLossMethod == SL_DYNAMIC) // 看空 动态止损
         {
             stopLossPrice = high + SL_Points_Buffer * _Point;
+            printf("bidPrice - stopLossPrice: " + MathAbs(bidPrice - stopLossPrice) + " MAX_SL: " + MAX_SL);
+            if (MathAbs(bidPrice - stopLossPrice) / _Point > MAX_SL) {
+                stopLossPrice = bidPrice + MAX_SL * _Point;
+            }
         }
         else if (StopLossMethod == SL_ATR) // 看空 ATR止损
         {
             stopLossPrice = bidPrice + atrValue[0] * ATR_StopLoss_Multiplier;
+            printf("bidPrice - stopLossPrice: " + MathAbs(bidPrice - stopLossPrice) + " MAX_SL: " + MAX_SL);
+            if (MathAbs(bidPrice - stopLossPrice) / _Point > MAX_SL) {
+                stopLossPrice = bidPrice + MAX_SL * _Point;
+            }
         }
 
         // 设置止盈
