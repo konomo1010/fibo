@@ -60,16 +60,18 @@ input int MinSignalBars = 1;             // 信号K线后至少要有多少根�
 input int MaxCandleBodySizePoints = 300; // 信号K线后最大允许的K线实体大小（基点）
 
 input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_ATR; // 默认使用动态止损方式
+input double ATR_StopLoss_Multiplier = 5.0;              // ATR止损倍数(ATR止损生效)
 input int MAX_SL = 1000;                             // 最大止损额度(基点)
 input int SL_Points_Buffer = 150;                         // 动态止损初始缓存基点
 input int DynamicSL_Buffer = 100;                        // 动态止损移动缓存基点
 input int FixedSLPoints = 200;                           // 固定止损点数（基点）
-input double ATR_StopLoss_Multiplier = 5.0;              // ATR止损倍数(ATR止损生效)
+
 
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_ATR; // 默认使用不设止盈方式
+input double ATR_TakeProfit_Multiplier = 15.0;             // ATR止盈倍数(ATR止盈生效)
 input int FixedTPPoints = 200;                            // 固定止盈点数（基点）
 input int InitialTPPoints = 2000;                         // 初始止盈点数（适用于动态止盈方式）
-input double ATR_TakeProfit_Multiplier = 10.0;             // ATR止盈倍数(ATR止盈生效)
+
 
 CTrade trade;
 
