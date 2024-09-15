@@ -83,7 +83,7 @@ bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double
 
     if (ma1Values[1] < ma2Values[1] && ma1Values[0] < ma2Values[0] &&
         open[1] < ma1Values[1] && close[1] > ma1Values[1] && close[1] < ma2Values[1] &&
-        close[0] > ma2Values[0] && open[0] < ma2Values[0] && open[0] > ma1Values[0] && 
+        close[0] > ma2Values[0] && open[0] < ma2Values[0] && open[0] > ma1Values[0] &&
         high[1] < close[0] && low[0] > open[1] &&
         MathAbs(open[1] - close[1]) >= MinBodyPoints * _Point && MathAbs(open[1] - close[1]) <= MaxBodyPoints * _Point &&
         MathAbs(open[0] - close[0]) >= MinBodyPoints * _Point && MathAbs(open[0] - close[0]) <= MaxBodyPoints * _Point)
@@ -165,11 +165,14 @@ void UpdateSignalValidity()
         return;
     }
 
+    double upperShadow = (lastCompletedHigh - MathMax(lastCompletedOpen, lastCompletedClose)) / _Point; // 上影线
+    double lowerShadow = (MathMin(lastCompletedOpen, lastCompletedClose) - lastCompletedLow) / _Point;  // 下影线
+
     if (longSignalConfirmed)
     {
-        
-        printf("lastCompletedClose: %.5f  minLow",lastCompletedClose,minLow);
-        printf("==========> K线计数器 %d",validBarCount);
+        printf("lastCompletedClose: %.5f  minLow", lastCompletedClose, minLow);
+        printf("==========> K线计数器 %d", validBarCount);
+
         if (lastCompletedClose < maValue[0])
         {
             ResetSignalState();
@@ -177,22 +180,31 @@ void UpdateSignalValidity()
         }
         else if (lastCompletedClose > maxHigh && validBarCount >= MinSignalBars)
         {
-            Print("多头信号确认，准备进场");
-            Sleep(StartDelay * 1000);
-            OpenBuyOrder(signalHigh, signalLow);
+            // 检查上一根K线的上影线
+            printf("上影线: %.5f, 上一根K线实体大小: %.5f", upperShadow, previousCandleBodySize);
+            if (upperShadow < previousCandleBodySize)
+            {
+                Print("多头信号确认，准备进场");
+                Sleep(StartDelay * 1000);
+                OpenBuyOrder(signalHigh, signalLow);
+                maxHigh = lastCompletedHigh;
+            }
+            Print("上一根K线上影线超过限制，进场信号失效，重新等待。");
         }
+
         if (lastCompletedHigh > maxHigh)
         {
             printf("更新最高点: %.5f", lastCompletedHigh);
             maxHigh = lastCompletedHigh;
         }
-        
+
         validBarCount++; // 信号K线有效，计数器加1
     }
     else if (shortSignalConfirmed)
     {
-        printf("==========> K线计数器 %d",validBarCount);
-        printf("lastCompletedClose: %.5f  minLow",lastCompletedClose,minLow);
+
+        printf("==========> K线计数器 %d", validBarCount);
+        printf("lastCompletedClose: %.5f  minLow", lastCompletedClose, minLow);
         if (lastCompletedClose > maValue[0])
         {
             ResetSignalState();
@@ -200,9 +212,16 @@ void UpdateSignalValidity()
         }
         else if (lastCompletedClose < minLow && validBarCount >= MinSignalBars)
         {
-            Print("空头信号确认，准备进场");
-            Sleep(StartDelay * 1000);
-            OpenSellOrder(signalHigh, signalLow);
+            // 检查上一根K线的下影线
+            printf("下影线: %.5f, 上一根K线实体大小: %.5f", lowerShadow, previousCandleBodySize);
+            if (lowerShadow < previousCandleBodySize)
+            {
+                Print("空头信号确认，准备进场");
+                Sleep(StartDelay * 1000);
+                OpenSellOrder(signalHigh, signalLow);
+                minLow = lastCompletedLow;
+            }
+            Print("上一根K线下影线超过限制，进场信号失效，重新等待。" + minLow);
         }
 
         if (lastCompletedLow < minLow)
@@ -211,6 +230,5 @@ void UpdateSignalValidity()
             minLow = lastCompletedLow;
         }
         validBarCount++; // 信号K线有效，计数器加1
-        
     }
 }
