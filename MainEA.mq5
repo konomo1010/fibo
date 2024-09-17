@@ -57,7 +57,7 @@ input ENUM_STOP_LOSS_METHOD StopLossMethod = SL_ATR; // 默认使用动态止损
 input double ATR_StopLoss_Multiplier = 5.0;          // ATR止损倍数(ATR止损生效)
 input int MAX_SL = 1000;                             // 最大止损额度(基点)
 input int SL_Points_Buffer = 150;                    // 动态止损初始缓存基点
-input int DynamicSL_Buffer = 100;                    // 动态止损移动缓存基点
+input int DynamicSL_Buffer = 20;                    // 动态止损移动缓存基点
 input int FixedSLPoints = 200;                       // 固定止损点数（基点）
 
 input ENUM_TAKE_PROFIT_METHOD TakeProfitMethod = TP_ATR; // 默认使用不设止盈方式
