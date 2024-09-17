@@ -76,7 +76,7 @@ bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double
     {
         signalHigh = high[0];
         signalLow = low[0];
-        printf("信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
+        printf("一根K线信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
         // signalBarIndex = iBarShift(_Symbol, Timeframe, iTime(_Symbol, Timeframe, 1));
         return true;
     }
@@ -90,7 +90,7 @@ bool CheckLongEntrySignal(double &high[], double &low[], double &close[], double
     {
         signalHigh = MathMax(high[0], high[1]);
         signalLow = MathMin(low[0], low[1]);
-        printf("信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
+        printf("二根K线信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
         // signalBarIndex = iBarShift(_Symbol, Timeframe, iTime(_Symbol, Timeframe, 2));
         return true;
     }
@@ -110,7 +110,7 @@ bool CheckShortEntrySignal(double &high[], double &low[], double &close[], doubl
     {
         signalHigh = high[0];
         signalLow = low[0];
-        printf("信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
+        printf("一根K线信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
         // signalBarIndex = iBarShift(_Symbol, Timeframe, iTime(_Symbol, Timeframe, 1));
         return true;
     }
@@ -124,7 +124,7 @@ bool CheckShortEntrySignal(double &high[], double &low[], double &close[], doubl
     {
         signalHigh = MathMax(high[0], high[1]);
         signalLow = MathMin(low[0], low[1]);
-        printf("信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
+        printf("二根K线信号高点: %.5f, 信号低点: %.5f", signalHigh, signalLow);
         // signalBarIndex = iBarShift(_Symbol, Timeframe, iTime(_Symbol, Timeframe, 2));
         return true;
     }
