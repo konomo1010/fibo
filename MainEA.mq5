@@ -43,7 +43,7 @@ input int TradeEndHour = 24;                               // 允许交易的结
 input ENUM_TIMEFRAMES Timeframe = PERIOD_M5;               // 交易时间周期，默认5分钟
 input double Lots = 0.05;                                  // 初始下单手数
 
-input ENUM_MA_METHOD MA_Method = MODE_SMA;            // 移动平均线方法
+input ENUM_MA_METHOD MA_Method = MODE_EMA;            // 移动平均线方法
 input ENUM_APPLIED_PRICE Applied_Price = PRICE_CLOSE; // 移动平均线应用价格
 
 input int MinBodyPoints = 50;  // 信号K线最小实体大小（基点）
